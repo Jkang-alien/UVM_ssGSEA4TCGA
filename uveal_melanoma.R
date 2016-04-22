@@ -7,6 +7,7 @@
 #untar('gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0.tar.gz', exdir = '.')
 
 #untar('gdac.broadinstitute.org_UVM-TP.CopyNumber_Gistic2.Level_4.2015082100.0.0.tar.gz', exdir = '.')
+library(RTCGAToolbox)
 
 data <- read.delim('./gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0/UVM-TP.transferedsamplefeatures.txt')
 
@@ -23,25 +24,22 @@ data$ID <- rownames(data)
 summary(data)
 colnames(data)
 
-ID_class1 <- data$ID[data$CLUS_CN_cNMF == 1]
-ID_class2 <- data$ID[data$CLUS_CN_cNMF == 2]
-ID_class3 <- data$ID[data$CLUS_CN_cNMF == 3]
+ID_3pDel <- data$ID[data$CN_3p_Del <= -0.2]
+ID_3pNor <- data$ID[data$CN_3p_Del > -0.2]
 
-boxplot(data$CN_3p_Del ~ as.factor(data$CLUS_CN_cNMF))
 
 
 ########### Cluster CN NMF ##########################################
 
 ################# RNA for GSEA ######################################
 ############http://www.hammerlab.org/################################
-library(RTCGAToolbox)
 
 getFirehoseDatasets()
 getFirehoseRunningDates(last = NULL)
 readData = getFirehoseData (dataset="UVM", runDate="20151101",forceDownload = TRUE,
                             Clinic=TRUE, Mutation=FALSE, Methylation=FALSE, RNAseq2_Gene_Norm=TRUE)
 
-clin = getData(readData, "Clinical")
+#clin = getData(readData, "Clinical")
 mRNA <- getData(readData, 'RNASeq2GeneNorm')
 
 colnames(mRNA) <- gsub('-...-...-....-..', '', colnames(mRNA))
@@ -49,15 +47,13 @@ colnames(mRNA) <- gsub('-', '\\.', colnames(mRNA))
 colnames(mRNA)
 
 data_GSEA <- c()
-data_GSEA <- cbind(mRNA[, colnames(mRNA) %in% ID_class1],
-                   mRNA[, colnames(mRNA) %in% ID_class2],
-                   mRNA[, colnames(mRNA) %in% ID_class3])
+data_GSEA <- cbind(mRNA[, colnames(mRNA) %in% ID_3pDel],
+                   mRNA[, colnames(mRNA) %in% ID_3pNor])
 
 GSEA <- data.frame(NAME = rownames(data_GSEA), 
                    DESCRIPTION = rep('na', dim(data_GSEA)[1]), data_GSEA)
-cls <- c(rep(0, length(ID_class1)),
-         rep(1, length(ID_class2)),
-         rep(2, length(ID_class3)))
+cls <- c(rep(0, length(ID_3pDel)),
+         rep(1, length(ID_3pNor)))
 
 write.table(GSEA, file = 'data.txt', append = FALSE, 
             quote = FALSE, sep = '\t',
