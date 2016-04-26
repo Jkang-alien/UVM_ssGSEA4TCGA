@@ -7,7 +7,9 @@
 #untar('gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0.tar.gz', exdir = '.')
 
 #untar('gdac.broadinstitute.org_UVM-TP.CopyNumber_Gistic2.Level_4.2015082100.0.0.tar.gz', exdir = '.')
-library(RTCGAToolbox)
+library('RTCGAToolbox')
+library('Cairo')
+
 
 data <- read.delim('./gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0/UVM-TP.transferedsamplefeatures.txt')
 
@@ -88,6 +90,18 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
                           CD80 = as.numeric(mRNA[rownames(mRNA) == 'CD80', ]),
                           CCL17 = as.numeric(mRNA[rownames(mRNA) == 'CCL17', ]),
                           CCL22 = as.numeric(mRNA[rownames(mRNA) == 'CCL22', ]))
+
+
+CairoPDF(file = './Figures/boxplots', width = 12, height = 9,
+         font = 10)
+par(mfrow = c(4,3))
+
+for (i in 2:13){
+  boxplot(immune_mRNA[,i] ~ immune_mRNA$Del3p,
+  main = colnames(immune_mRNA)[i])
+} 
+
+dev.off()
 
 boxplot(log(immune_mRNA$IFNG) ~ immune_mRNA$Del3p)
 immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
