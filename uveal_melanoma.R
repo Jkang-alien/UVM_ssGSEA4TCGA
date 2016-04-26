@@ -18,6 +18,7 @@ rownames(data_gdac) <- colnames(data)[-1]
 data <- data.frame(data_gdac[-dim(data_gdac)[1],])
 
 data[, c(1:4, 15:250)] <- sapply(data[, c(1:4, 15:250)], as.character)
+
 data[, c(1:4, 15:250)] <- sapply(data[, c(1:4, 15:250)], as.numeric)
 data$ID <- rownames(data)
 
@@ -68,3 +69,28 @@ write(cls, file = 'cls.cls', append = FALSE,
       #col.names = TRUE, 
       ncolumns = length(cls)
 )
+
+############# mRNA expression comparison #################
+log_TSLP <- log(mRNA[rownames(mRNA) == 'TSLP', ])
+
+immune_mRNA <- data.frame(ID = colnames(mRNA),
+                          TSLP = as.numeric(mRNA[rownames(mRNA) == 'TSLP', ]),
+                          #TSLPR = as.numeric(mRNA[rownames(mRNA) == 'TSLPR', ]),
+                          GATA3 = as.numeric(mRNA[rownames(mRNA) == 'GATA3', ]),
+                          TBX21 = as.numeric(mRNA[rownames(mRNA) == 'TBX21', ]),
+                          IFNG = as.numeric(mRNA[rownames(mRNA) == 'IFNG', ]),
+                          IL1B = as.numeric(mRNA[rownames(mRNA) == 'IL1B', ]),
+                          TNF = as.numeric(mRNA[rownames(mRNA) == 'TNF', ]),
+                          #IL12 = as.numeric(mRNA[rownames(mRNA) == 'IL12', ]),
+                          IL10 = as.numeric(mRNA[rownames(mRNA) == 'IL10', ]),
+                          IL6 = as.numeric(mRNA[rownames(mRNA) == 'IL6', ]),
+                          IL13 = as.numeric(mRNA[rownames(mRNA) == 'IL13', ]),
+                          CD80 = as.numeric(mRNA[rownames(mRNA) == 'CD80', ]),
+                          CCL17 = as.numeric(mRNA[rownames(mRNA) == 'CCL17', ]),
+                          CCL22 = as.numeric(mRNA[rownames(mRNA) == 'CCL22', ]))
+
+boxplot(log(immune_mRNA$IFNG) ~ immune_mRNA$Del3p)
+immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
+
+
+
