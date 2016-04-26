@@ -91,6 +91,7 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
                           CCL17 = as.numeric(mRNA[rownames(mRNA) == 'CCL17', ]),
                           CCL22 = as.numeric(mRNA[rownames(mRNA) == 'CCL22', ]))
 
+immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
 
 CairoPDF(file = './Figures/boxplots', width = 12, height = 9,
          font = 10)
@@ -98,13 +99,9 @@ par(mfrow = c(4,3))
 
 for (i in 2:13){
   boxplot(immune_mRNA[,i] ~ immune_mRNA$Del3p,
-  main = colnames(immune_mRNA)[i])
+  main = colnames(immune_mRNA)[i],
+  names = c('3pNor', '3pDel'))
 } 
 
 dev.off()
-
-boxplot(log(immune_mRNA$IFNG) ~ immune_mRNA$Del3p)
-immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
-
-
 
