@@ -180,7 +180,7 @@ library(rms)
 data_clin <- merge(clin, immune_mRNA, by = 'ID', all.y = TRUE)
 data_clin$f_ratio_GATA3_TBX21 <- factor(data_clin$ratio_GATA3_TBX21 > 1.2)
 data_subset <- data_clin %>%
-    filter(GATA3 > 10 )
+    filter(Del3p == TRUE )
 
 strata <- c('ratio GATA/TBX21 > 1.2',
             'ratio GATA/TBX21 <= 1.2')
@@ -194,11 +194,11 @@ par(
   mar=c(6,4,2,6), mgp = c(2, 1, 0))
 
 
-fit = npsurv(Surv(OS_M, vital_status == 1)~f_ratio_GATA3_TBX21,
+fit = npsurv(Surv(OS_M, vital_status == 1)~data_subset$GATA3 > 40,
                data = data_subset)
 fit
 
-diff = survdiff(Surv(OS_M, vital_status == 1)~f_ratio_GATA3_TBX21,
+diff = survdiff(Surv(OS_M, vital_status == 1)~data_subset$GATA3 > 40,
                 data = data_subset)
 diff
 
@@ -229,5 +229,9 @@ legend(10, 0.1, 'P-value = 0.412', cex = 0.8,
 
 dev.off()
 
-
-
+cox <- coxph(Surv(OS_M, vital_status == 1)~(data_subset$GATA3>10)+(data_subset$TBX21>10),
+      data = data_subset)
+sink('./Figures/stastics.txt')
+coxph(Surv(OS_M, vital_status == 1)~(data_subset$GATA3>10)+(data_subset$TBX21>10),
+      data = data_subset)
+sink()
