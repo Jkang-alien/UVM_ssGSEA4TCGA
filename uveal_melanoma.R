@@ -10,7 +10,8 @@
 library('RTCGAToolbox')
 library('Cairo')
 library('dplyr')
-
+library(survival)
+library(rms)
 
 data <- read.delim('./gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0/UVM-TP.transferedsamplefeatures.txt')
 
@@ -109,31 +110,124 @@ for (i in 2:16){
 
 dev.off()
 
-CairoPDF(file = './Figures/GATA_TBX21.pdf', width = 12, height = 12,
+CairoPDF(file = './Figures/GATA_TBX21.pdf', width = 6, height = 6,
          font = 10)
 par(mfrow = c(1,1))
 
-plot(immune_mRNA$GATA3, immune_mRNA$TBX21,
+plot(immune_mRNA$TBX21, immune_mRNA$GATA3, 
      col = immune_mRNA$Del3p + 1,
-     xlab = 'GATA mRNA expression (RSEM)',
-     ylab = 'TBX21 mRNA expression (RSEM)')
+     xlab = 'TBX21 mRNA expression (RSEM)',
+     ylab = 'GATA3 mRNA expression (RSEM)'
+     )
 
 #abline (h= 10)
 #abline (v = 10)
 
-legend(0, 150, c('3pNor', '3pDel'),
+legend(70, 40, c('3pNor', '3pDel'),
        pch = 1,
        col = c(1,2),
+       bty = "0")
+
+legend(70, 20, 'Correlation coefficient: 0.82',
        bty = "n")
 
-legend(0, 130, 'Correlation coefficient: 0.82',
-       bty = "n")
+#abline(0, 1.2)
 
-abline(0, 1)
 dev.off()
 
-clin <- mRNA <- getData(readData, 'Clinical')
+
+CairoPDF(file = './Figures/Th2.pdf', width = 12, height = 6,
+         font = 10)
+par(mfrow = c(1,2))
+plot(immune_mRNA$TSLP, immune_mRNA$TNFSF4,
+     col = immune_mRNA$Del3p + 1,
+     xlab = 'TSLP mRNA expression (RSEM)',
+     ylab = 'TNFSF4 mRNA expression (RSEM)')
+legend(70, 80, c('3pNor', '3pDel'),
+       pch = 1,
+       col = c(1,2),
+       bty = "0")
+legend(70, 60, 'Correlation coefficient: -0.13',
+       bty = "n")
+
+plot(immune_mRNA$GATA3, immune_mRNA$TNFSF4,
+     col = immune_mRNA$Del3p + 1,
+     xlab = 'GATA3 mRNA expression (RSEM)',
+     ylab = 'TNFSF4 mRNA expression (RSEM)')
+legend(40, 30, c('3pNor', '3pDel'),
+       pch = 1,
+       col = c(1,2),
+       bty = "0")
+legend(40, 10, 'Correlation coefficient: 0.84',
+       bty = "n")
+
+dev.off()
+
+cor(immune_mRNA$GATA3, immune_mRNA$TNFSF4)
+
+immune_mRNA$ratio_GATA3_TBX21 <- round(immune_mRNA$GATA3/immune_mRNA$TBX21, digits = 2)
+clin <- getData(readData, 'Clinical')
 clin$months_surv <- clin$days_to_death
 clin$months_surv[is.na(clin$days_to_death)] <- clin$days_to_last_followup[is.na(clin$days_to_death)]
+clin$ID <- toupper(rownames(clin))
+clin$OS_M <- round(as.numeric(clin$months_surv)/30.4, digits = 1)
+#clin$f_ratio_GATA3_TBX21 <- factor(clin$ratio_GATA3_TBX21 > 0.8)
+
+library(survival)
+library(rms)
+
+
+data_clin <- merge(clin, immune_mRNA, by = 'ID', all.y = TRUE)
+data_clin$f_ratio_GATA3_TBX21 <- factor(data_clin$ratio_GATA3_TBX21 > 1.2)
+data_subset <- data_clin %>%
+    filter(GATA3 > 10 )
+
+strata <- c('ratio GATA/TBX21 > 1.2',
+            'ratio GATA/TBX21 <= 1.2')
+library(Cairo)
+
+CairoPDF(file = "./Figures/Survival.pdf",  width = 5, height = 5, 
+         onefile = TRUE, bg = "transparent",
+         pointsize = 12)
+par(
+  #mfrow = c(1,2), 
+  mar=c(6,4,2,6), mgp = c(2, 1, 0))
+
+
+fit = npsurv(Surv(OS_M, vital_status == 1)~f_ratio_GATA3_TBX21,
+               data = data_subset)
+fit
+
+diff = survdiff(Surv(OS_M, vital_status == 1)~f_ratio_GATA3_TBX21,
+                data = data_subset)
+diff
+
+survplot(fit,
+         time.inc = 12,
+         xlab = 'Months',
+         lty = c(1:2),
+         conf="none", add=FALSE, 
+         label.curves=FALSE, abbrev.label=FALSE,
+         levels.only=TRUE, lwd=par('lwd'),
+         col=1, col.fill=gray(seq(.95, .75, length=5)),
+         loglog=FALSE,n.risk=FALSE,logt=FALSE,
+         dots=FALSE,
+         grid=FALSE,
+         srt.n.risk=0, sep.n.risk=0.04, adj.n.risk=0.3, 
+         y.n.risk=-0.2, cex.n.risk=0.6, pr=FALSE       
+)
+
+legend(10, 0.2, strata, lty = c(1:2), cex = 0.8,
+       xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1,
+       trace = TRUE,
+       bty = 'n')
+
+legend(10, 0.1, 'P-value = 0.412', cex = 0.8,
+       xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1,
+       trace = TRUE,
+       bty = 'n')
+
+dev.off()
+
 
 
