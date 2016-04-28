@@ -9,6 +9,7 @@
 #untar('gdac.broadinstitute.org_UVM-TP.CopyNumber_Gistic2.Level_4.2015082100.0.0.tar.gz', exdir = '.')
 library('RTCGAToolbox')
 library('Cairo')
+library('dplyr')
 
 
 data <- read.delim('./gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0/UVM-TP.transferedsamplefeatures.txt')
@@ -77,13 +78,15 @@ log_TSLP <- log(mRNA[rownames(mRNA) == 'TSLP', ])
 
 immune_mRNA <- data.frame(ID = colnames(mRNA),
                           TSLP = as.numeric(mRNA[rownames(mRNA) == 'TSLP', ]),
+                          TNFSF4 = as.numeric(mRNA[rownames(mRNA) == 'TNFSF4', ]),
                           #TSLPR = as.numeric(mRNA[rownames(mRNA) == 'TSLPR', ]),
                           GATA3 = as.numeric(mRNA[rownames(mRNA) == 'GATA3', ]),
                           TBX21 = as.numeric(mRNA[rownames(mRNA) == 'TBX21', ]),
                           IFNG = as.numeric(mRNA[rownames(mRNA) == 'IFNG', ]),
                           IL1B = as.numeric(mRNA[rownames(mRNA) == 'IL1B', ]),
                           TNF = as.numeric(mRNA[rownames(mRNA) == 'TNF', ]),
-                          #IL12 = as.numeric(mRNA[rownames(mRNA) == 'IL12', ]),
+                          IL12A = as.numeric(mRNA[rownames(mRNA) == 'IL12A', ]),
+                          IL12B = as.numeric(mRNA[rownames(mRNA) == 'IL12B', ]),
                           IL10 = as.numeric(mRNA[rownames(mRNA) == 'IL10', ]),
                           IL6 = as.numeric(mRNA[rownames(mRNA) == 'IL6', ]),
                           IL13 = as.numeric(mRNA[rownames(mRNA) == 'IL13', ]),
@@ -93,15 +96,42 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
 
 immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
 
-CairoPDF(file = './Figures/boxplots', width = 12, height = 9,
+CairoPDF(file = './Figures/boxplots', width = 12, height = 12,
          font = 10)
-par(mfrow = c(4,3))
+par(mfrow = c(4,4))
 
-for (i in 2:13){
+for (i in 2:16){
   boxplot(immune_mRNA[,i] ~ immune_mRNA$Del3p,
   main = colnames(immune_mRNA)[i],
+  ylim = c(0, 200),
   names = c('3pNor', '3pDel'))
 } 
 
 dev.off()
+
+CairoPDF(file = './Figures/GATA_TBX21.pdf', width = 12, height = 12,
+         font = 10)
+par(mfrow = c(1,1))
+
+plot(immune_mRNA$GATA3, immune_mRNA$TBX21,
+     col = immune_mRNA$Del3p + 1,
+     xlab = 'GATA mRNA expression (RSEM)',
+     ylab = 'TBX21 mRNA expression (RSEM)')
+
+#abline (h= 10)
+#abline (v = 10)
+
+legend(0, 150, c('3pNor', '3pDel'),
+       pch = 1,
+       col = c(1,2),
+       bty = "n")
+
+legend(0, 130, 'Correlation coefficient: 0.82',
+       bty = "n")
+
+abline(0, 1)
+dev.off()
+
+
+
 
