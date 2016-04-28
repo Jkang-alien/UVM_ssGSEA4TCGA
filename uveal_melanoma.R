@@ -132,6 +132,8 @@ legend(0, 130, 'Correlation coefficient: 0.82',
 abline(0, 1)
 dev.off()
 
-
+clin <- mRNA <- getData(readData, 'Clinical')
+clin$months_surv <- clin$days_to_death
+clin$months_surv[is.na(clin$days_to_death)] <- clin$days_to_last_followup[is.na(clin$days_to_death)]
 
 
