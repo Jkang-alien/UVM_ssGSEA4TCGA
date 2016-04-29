@@ -139,15 +139,15 @@ dev.off()
 CairoPDF(file = './Figures/Th2.pdf', width = 12, height = 6,
          font = 10)
 par(mfrow = c(1,2))
-plot(immune_mRNA$TSLP, immune_mRNA$TNFSF4,
+plot(immune_mRNA$TSLP, immune_mRNA$GATA3,
      col = immune_mRNA$Del3p + 1,
      xlab = 'TSLP mRNA expression (RSEM)',
-     ylab = 'TNFSF4 mRNA expression (RSEM)')
+     ylab = 'GATA3 mRNA expression (RSEM)')
 legend(70, 80, c('3pNor', '3pDel'),
        pch = 1,
        col = c(1,2),
        bty = "0")
-legend(70, 60, 'Correlation coefficient: -0.13',
+legend(70, 60, 'Correlation coefficient: -0.15',
        bty = "n")
 
 plot(immune_mRNA$GATA3, immune_mRNA$TNFSF4,
@@ -163,7 +163,7 @@ legend(40, 10, 'Correlation coefficient: 0.84',
 
 dev.off()
 
-cor(immune_mRNA$GATA3, immune_mRNA$TNFSF4)
+cor(immune_mRNA$GATA3, immune_mRNA$TSLP)
 
 immune_mRNA$ratio_GATA3_TBX21 <- round(immune_mRNA$GATA3/immune_mRNA$TBX21, digits = 2)
 clin <- getData(readData, 'Clinical')
