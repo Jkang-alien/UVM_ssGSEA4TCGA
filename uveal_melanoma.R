@@ -235,9 +235,12 @@ dev.off()
 cox <- coxph(Surv(OS_M, vital_status == 1)~(data_subset$GATA3>10)+(data_subset$TBX21>10),
       data = data_subset)
 sink('./Figures/stastics.txt')
-coxph(Surv(OS_M, vital_status == 1)~(data_subset$GATA3>10)+(data_subset$TBX21>10),
+coxph(Surv(OS_M, vital_status == 1)~(data_subset$GATA3>10) + (data_subset$TBX21>10),
       data = data_subset)
 sink()
+
+coxph(Surv(OS_M, vital_status == 1)~(data_subset$TBX21>10) ,
+      data = data_subset)
 
 ############# IL expression in 3pDel subset ##################
 
@@ -287,10 +290,12 @@ print (ggplot(data_subset_GATA_TBX21,
 dev.off()
 
 summary(lm(IFNG~TBX21 * GATA3 , data_subset))
-lm <- lm(IFNG~ TBX21 + (TBX21 %in% ratio_GATA3_TBX21) , data_subset)
-#lm <- lm(IFNG~ ratio_GATA3_TBX21 , data_subset)
+lm <- lm(IFNG~ TBX21 + (TBX21 %in% GATA3) , data_clin)
 summary(lm)
 plot(lm)
 
-cor(IFNG~TBX21 , data_subset)
-plot(data_subset$TBX21, data_subset$IFNG)
+#mean centering linear regression http://www.statedu.com/term/105360
+
+## GATA3 does not inhibit Th1 activity ################
+
+plot(data_subset$ratio_GATA3_TBX21, data_subset$IFNG)
