@@ -12,6 +12,7 @@ library('Cairo')
 library('dplyr')
 library(survival)
 library(rms)
+library(ggplot2)
 
 data <- read.delim('./gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0/UVM-TP.transferedsamplefeatures.txt')
 
@@ -90,6 +91,8 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
                           IL12B = as.numeric(mRNA[rownames(mRNA) == 'IL12B', ]),
                           IL10 = as.numeric(mRNA[rownames(mRNA) == 'IL10', ]),
                           IL6 = as.numeric(mRNA[rownames(mRNA) == 'IL6', ]),
+                          IL4 = as.numeric(mRNA[rownames(mRNA) == 'IL4', ]),
+                          IL5 = as.numeric(mRNA[rownames(mRNA) == 'IL5', ]),
                           IL13 = as.numeric(mRNA[rownames(mRNA) == 'IL13', ]),
                           CD80 = as.numeric(mRNA[rownames(mRNA) == 'CD80', ]),
                           CCL17 = as.numeric(mRNA[rownames(mRNA) == 'CCL17', ]),
@@ -97,9 +100,9 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
 
 immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
 
-CairoPDF(file = './Figures/boxplots', width = 12, height = 12,
+CairoPDF(file = './Figures/boxplots', width = 12, height = 16,
          font = 10)
-par(mfrow = c(4,4))
+par(mfrow = c(4,5))
 
 for (i in 2:16){
   boxplot(immune_mRNA[,i] ~ immune_mRNA$Del3p,
@@ -180,7 +183,7 @@ library(rms)
 data_clin <- merge(clin, immune_mRNA, by = 'ID', all.y = TRUE)
 data_clin$f_ratio_GATA3_TBX21 <- factor(data_clin$ratio_GATA3_TBX21 > 1.2)
 data_subset <- data_clin %>%
-    filter(Del3p == TRUE )
+  filter(Del3p == TRUE ) 
 
 strata <- c('ratio GATA/TBX21 > 1.2',
             'ratio GATA/TBX21 <= 1.2')
@@ -235,3 +238,59 @@ sink('./Figures/stastics.txt')
 coxph(Surv(OS_M, vital_status == 1)~(data_subset$GATA3>10)+(data_subset$TBX21>10),
       data = data_subset)
 sink()
+
+############# IL expression in 3pDel subset ##################
+
+data_subset_GATA_TBX21 <- data_clin %>%
+  #filter(Del3p == TRUE ) %>%
+  filter (GATA3 >10) %>%
+  filter (TBX21 >10)
+
+library(ggplot2)
+require(gridExtra)
+
+CairoPDF(file = './Figures/IL_3pDel_subset.pdf', width = 12, height = 16,
+         font = 8)
+#par(mfrow = c(4,4))
+grid.arrange(plot1, plot2)
+for (i in 20:35){
+  CairoPDF(file = './Figures/IL_3pDel_subset.pdf', width = 12, height = 16,
+           font = 8)
+  grid.arrange(plot1, plot2)
+print (ggplot(data_subset_GATA_TBX21, 
+            aes(x=data_subset_GATA_TBX21$f_ratio_GATA3_TBX21,
+                y=data_subset_GATA_TBX21[,i])) + 
+    geom_boxplot() +
+    geom_dotplot(binaxis='y', stackdir='center',
+                 stackratio=1.5, dotsize=1.2,
+                 binwidth = 3))
+  
+
+}
+  
+dev.off()
+
+CairoPDF(file = './Figures/IL_3pDel_subset.pdf', width = 12, height = 16,
+         font = 8)
+for (i in 20:35) {
+print (ggplot(data_subset_GATA_TBX21, 
+          aes(x=f_ratio_GATA3_TBX21,
+              y=data_subset_GATA_TBX21[i])) + 
+  geom_boxplot() +
+  geom_dotplot(binaxis='y', stackdir='center',
+               stackratio=1.5, dotsize=1.2,
+               binwidth = 3) + 
+  scale_fill_grey() + 
+  theme_classic())
+
+}
+dev.off()
+
+summary(lm(IFNG~TBX21 * GATA3 , data_subset))
+lm <- lm(IFNG~ TBX21 + (TBX21 %in% ratio_GATA3_TBX21) , data_subset)
+#lm <- lm(IFNG~ ratio_GATA3_TBX21 , data_subset)
+summary(lm)
+plot(lm)
+
+cor(IFNG~TBX21 , data_subset)
+plot(data_subset$TBX21, data_subset$IFNG)
