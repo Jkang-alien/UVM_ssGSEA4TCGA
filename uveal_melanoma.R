@@ -13,6 +13,7 @@ library('dplyr')
 library(survival)
 library(rms)
 library(ggplot2)
+require(gridExtra)
 
 data <- read.delim('./gdac.broadinstitute.org_UVM-TP.Aggregate_AnalysisFeatures.Level_4.2015082100.0.0/UVM-TP.transferedsamplefeatures.txt')
 
@@ -31,10 +32,12 @@ summary(data)
 colnames(data)
 
 ID_3pDel <- data$ID[data$CN_3p_Del <= -0.2]
+ID_3qDel <- data$ID[data$CN_3q_Del <= -0.2]
 ID_3pNor <- data$ID[data$CN_3p_Del > -0.2]
+ID_3qNor <- data$ID[data$CN_3q_Del > -0.2]
 
-
-
+sum(ID_3qNor == ID_3pNor)
+sum(ID_3qDel == ID_3pDel)
 ########### Cluster CN NMF ##########################################
 
 ################# RNA for GSEA ######################################
@@ -76,8 +79,6 @@ write(cls, file = 'cls.cls', append = FALSE,
 )
 
 ############# mRNA expression comparison #################
-log_TSLP <- log(mRNA[rownames(mRNA) == 'TSLP', ])
-
 immune_mRNA <- data.frame(ID = colnames(mRNA),
                           TSLP = as.numeric(mRNA[rownames(mRNA) == 'TSLP', ]),
                           TNFSF4 = as.numeric(mRNA[rownames(mRNA) == 'TNFSF4', ]),
@@ -100,18 +101,193 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
 
 immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
 
-CairoPDF(file = './Figures/boxplots', width = 12, height = 16,
-         font = 10)
-par(mfrow = c(4,5))
+IFNG <- ggplot(immune_mRNA,
+       aes(x=Del3p, y=IFNG))+ 
+ geom_dotplot(binaxis='y', stackdir='center',
+               stackratio=1.5, #dotsize=1.0,
+               binwidth = 0.6) +
+  scale_x_discrete(breaks=c(FALSE, TRUE),
+                   labels=c("Absence", "Presence")) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+               size=2, color="red") +
+  scale_fill_grey() +
+  theme_classic()+
+  labs(title="Interferon gamma",x="Loss of Chromosome3", 
+      y = "mRNA expression (RSEM)") 
 
-for (i in 2:16){
-  boxplot(immune_mRNA[,i] ~ immune_mRNA$Del3p,
-  main = colnames(immune_mRNA)[i],
-  ylim = c(0, 200),
-  names = c('3pNor', '3pDel'))
-} 
+
+
+IL12A <- ggplot(immune_mRNA, 
+              aes(x=Del3p,
+                  y=IL12A)) +
+       geom_dotplot(binaxis='y', stackdir='center',
+                    stackratio=1.5, #dotsize=1.0
+                    binwidth = 0.05
+                    ) +
+         scale_x_discrete(breaks=c(FALSE, TRUE),
+                          labels=c("Absence", "Presence")) +
+       stat_summary(fun.y=median, geom="point", shape=18,
+                    size=2, color="red") +
+       scale_fill_grey() +
+       theme_classic() +
+       labs(title="Interleukin12A",
+            x="", 
+            y = "")
+
+IL12B <- ggplot(immune_mRNA, 
+                 aes(x=Del3p,
+                     y=IL12B)) +
+  geom_dotplot(binaxis='y', stackdir='center',
+               stackratio=1.5, #dotsize=1.0
+               binwidth = 0.05
+  ) +
+  scale_x_discrete(breaks=c(FALSE, TRUE),
+                   labels=c("Absence", "Presence")) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+               size=2, color="red") +
+  scale_fill_grey() +
+  theme_classic() +
+  labs(title="Interleukin12B",
+       x="", 
+       y = "")
+
+CairoPDF(file = './Figures/Th1.pdf', width = 12, height = 4,
+         pointsize=18)
+multiplot(IFNG, IL12A, IL12B, cols = 3)
 
 dev.off()
+
+
+########## Th2 ###########################
+TSLP <- ggplot(immune_mRNA,
+               aes(x=Del3p, y=TSLP))+ 
+  geom_dotplot(binaxis='y', stackdir='center',
+               stackratio=1.5, #dotsize=1.0,
+               binwidth = 1.0) +
+  scale_x_discrete(breaks=c(FALSE, TRUE),
+                   labels=c("Absence", "Presence")) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+               size=2, color="red") +
+  scale_fill_grey() +
+  theme_classic()+
+  labs(title="TSLP",x="Loss of Chromosome3", 
+       y = "mRNA expression (RSEM)") 
+
+
+
+IL4 <- ggplot(immune_mRNA, 
+                aes(x=Del3p,
+                    y=IL4)) +
+  geom_dotplot(binaxis='y', stackdir='center',
+               stackratio=1.5, #dotsize=1.0
+               binwidth = 0.005
+  ) +
+  scale_x_discrete(breaks=c(FALSE, TRUE),
+                   labels=c("Absence", "Presence")) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+               size=2, color="red") +
+  scale_fill_grey() +
+  theme_classic() +
+  labs(title="Interleukin4",
+       x="", 
+       y = "")
+
+IL13 <- ggplot(immune_mRNA, 
+                aes(x=Del3p,
+                    y=IL13)) +
+  geom_dotplot(binaxis='y', stackdir='center',
+               stackratio=1.5, #dotsize=1.0
+               binwidth = 0.01
+  ) +
+  scale_x_discrete(breaks=c(FALSE, TRUE),
+                   labels=c("Absence", "Presence")) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+               size=2, color="red") +
+  scale_fill_grey() +
+  theme_classic() +
+  labs(title="Interleukin13",
+       x="", 
+       y = "")
+
+CairoPDF(file = './Figures/Th2.pdf', width = 12, height = 4,
+         pointsize=18)
+multiplot(TSLP, IL4, IL13, cols = 3)
+
+dev.off()
+
+wilcox.test(IFNG ~ Del3p, immune_mRNA)
+wilcox.test(IL12A ~ Del3p, immune_mRNA)
+wilcox.test(IL12B ~ Del3p, immune_mRNA)
+wilcox.test(TSLP ~ Del3p, immune_mRNA)
+wilcox.test(IL4 ~ Del3p, immune_mRNA)
+wilcox.test(IL13 ~ Del3p, immune_mRNA)
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+
+
+
+require(gridExtra)
+library(grid)
+
+grid.arrange(IFNG, IL4)
+
+pl <- list(IFNG, IL4)
+ml <- marrangeGrob(pl, nrow=1, ncol=2)
+
+
+multiplot(IFNG, IL4, cols = 2)
+
+CairoPDF(file = './Figures/IL_3pDel_subset.pdf', width = 12, height = 16,
+         font = 8)
+#par(mfrow = c(4,4))
+grid.arrange(plot1, plot2)
+dev.off()
+
 
 CairoPDF(file = './Figures/GATA_TBX21.pdf', width = 6, height = 6,
          font = 10)
