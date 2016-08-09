@@ -101,34 +101,25 @@ immune_mRNA <- data.frame(ID = colnames(mRNA),
 
 immune_mRNA$Del3p <- immune_mRNA$ID %in% ID_3pDel
 
-TBX21 <- ggplot(immune_mRNA,
-               aes(x=Del3p, y=TBX21))+ 
-  geom_dotplot(binaxis='y', stackdir='center',
-               stackratio=1.5, #dotsize=1.0,
-               binwidth = 0.6) +
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
-  stat_summary(fun.y=median, geom="point", shape=18,
-               size=2, color="red") +
-  scale_fill_grey() +
-  theme_classic()+
-  labs(title="TBX21",x="", 
-       y = "mRNA expression (RSEM)") 
-
-
 IFNG <- ggplot(immune_mRNA,
        aes(x=Del3p, y=IFNG))+ 
  geom_dotplot(binaxis='y', stackdir='center',
                stackratio=1.5, #dotsize=1.0,
                binwidth = 0.6) +
   scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
+                   labels=c("Absence", "Presence")) +
   stat_summary(fun.y=median, geom="point", shape=18,
                size=2, color="red") +
   scale_fill_grey() +
   theme_classic()+
-  labs(title="Interferon gamma",x="", 
-      y = "mRNA expression (RSEM)") 
+  labs(title="Interferon gamma",x="Loss of Chromosome3", 
+      y = "mRNA expression (RSEM)") +
+  geom_path(x=c(1,1,2,2),y=c(25,26,26,25))+
+  geom_path(x=c(2,2,3,3),y=c(37,38,38,37))+
+  geom_path(x=c(3,3,4,4),y=c(49,50,50,49))+
+  annotate("text",x=1.5,y=27,label="p=0.012")+
+  annotate("text",x=2.5,y=39,label="p<0.0001")+
+  annotate("text",x=3.5,y=51,label="p<0.0001")
 
 
 
@@ -140,7 +131,7 @@ IL12A <- ggplot(immune_mRNA,
                     binwidth = 0.05
                     ) +
          scale_x_discrete(breaks=c(FALSE, TRUE),
-                          labels=c("Chr3 disomy", "Chr3 monosomy")) +
+                          labels=c("Absence", "Presence")) +
        stat_summary(fun.y=median, geom="point", shape=18,
                     size=2, color="red") +
        scale_fill_grey() +
@@ -157,7 +148,7 @@ IL12B <- ggplot(immune_mRNA,
                binwidth = 0.05
   ) +
   scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
+                   labels=c("Absence", "Presence")) +
   stat_summary(fun.y=median, geom="point", shape=18,
                size=2, color="red") +
   scale_fill_grey() +
@@ -166,44 +157,26 @@ IL12B <- ggplot(immune_mRNA,
        x="", 
        y = "")
 
-CairoPDF(file = './Figures/Th1.pdf', width = 16, height = 4,
+CairoPDF(file = './Figures/Th1.pdf', width = 12, height = 4,
          pointsize=18)
-multiplot(TBX21, IFNG, IL12A, IL12B, cols = 4)
+multiplot(IFNG, IL12A, IL12B, cols = 3)
 
 dev.off()
 
 
 ########## Th2 ###########################
-
-GATA3 <- ggplot(immune_mRNA, 
-                aes(x=Del3p,
-                    y=GATA3)) +
-  geom_dotplot(binaxis='y', stackdir='center',
-               stackratio=1.5, #dotsize=1.0
-               binwidth = 0.05
-  ) +
-  scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
-  stat_summary(fun.y=median, geom="point", shape=18,
-               size=2, color="red") +
-  scale_fill_grey() +
-  theme_classic() +
-  labs(title="GATA3",
-       x="", 
-       y = "mRNA expression (RSEM)")
-
 TSLP <- ggplot(immune_mRNA,
                aes(x=Del3p, y=TSLP))+ 
   geom_dotplot(binaxis='y', stackdir='center',
                stackratio=1.5, #dotsize=1.0,
                binwidth = 1.0) +
   scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
+                   labels=c("Absence", "Presence")) +
   stat_summary(fun.y=median, geom="point", shape=18,
                size=2, color="red") +
   scale_fill_grey() +
   theme_classic()+
-  labs(title="TSLP",x="", 
+  labs(title="TSLP",x="Loss of Chromosome3", 
        y = "mRNA expression (RSEM)") 
 
 
@@ -216,7 +189,7 @@ IL4 <- ggplot(immune_mRNA,
                binwidth = 0.005
   ) +
   scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
+                   labels=c("Absence", "Presence")) +
   stat_summary(fun.y=median, geom="point", shape=18,
                size=2, color="red") +
   scale_fill_grey() +
@@ -233,7 +206,7 @@ IL13 <- ggplot(immune_mRNA,
                binwidth = 0.01
   ) +
   scale_x_discrete(breaks=c(FALSE, TRUE),
-                   labels=c("Chr3 disomy", "Chr3 monosomy")) +
+                   labels=c("Absence", "Presence")) +
   stat_summary(fun.y=median, geom="point", shape=18,
                size=2, color="red") +
   scale_fill_grey() +
@@ -242,17 +215,15 @@ IL13 <- ggplot(immune_mRNA,
        x="", 
        y = "")
 
-CairoPDF(file = './Figures/Th2.pdf', width = 16, height = 4,
+CairoPDF(file = './Figures/Th2.pdf', width = 12, height = 4,
          pointsize=18)
-multiplot(GATA3, TSLP, IL4, IL13, cols = 4)
+multiplot(TSLP, IL4, IL13, cols = 3)
 
 dev.off()
 
-wilcox.test(TBX21 ~ Del3p, immune_mRNA)
 wilcox.test(IFNG ~ Del3p, immune_mRNA)
 wilcox.test(IL12A ~ Del3p, immune_mRNA)
 wilcox.test(IL12B ~ Del3p, immune_mRNA)
-wilcox.test(GATA3 ~ Del3p, immune_mRNA)
 wilcox.test(TSLP ~ Del3p, immune_mRNA)
 wilcox.test(IL4 ~ Del3p, immune_mRNA)
 wilcox.test(IL13 ~ Del3p, immune_mRNA)
