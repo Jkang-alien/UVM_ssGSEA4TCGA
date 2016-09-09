@@ -14,10 +14,6 @@ gs <- gs_gmt('custom.bindea_correct.gmt')
 data <- pancancer_ssGSEA(dset, rdate[1], gs)
 data_t <- scale(t(data[[1]]), center = TRUE, scale = TRUE)
 
-ann <- data.frame(class = as.factor(results_row[[6]]$consensusClass),
-                  type = data[[2]], 
-                  Tumor = TvsN)
-
 results_col = ConsensusClusterPlus(data_t,maxK=6,reps=5000,pItem=0.8,pFeature=1,
                                    title='consensus_col',
                                    clusterAlg="hc",
@@ -27,7 +23,7 @@ results_col = ConsensusClusterPlus(data_t,maxK=6,reps=5000,pItem=0.8,pFeature=1,
                                    plot="pdf")
 
 results_row = ConsensusClusterPlus(data[[1]],maxK=6,reps=5000,pItem=0.8,pFeature=1,
-                                   title='consensus_by_row',
+                                   title='consensus_row',
                                    clusterAlg="hc",
                                    innerLinkage = "ward.D2",
                                    finalLinkage = "ward.D2",
@@ -71,7 +67,18 @@ Chr3 <- factor(Chr3,
 
 ann$Chr3 <- Chr3
 
+CairoPDF(file = 'pancancer_TCGA.pdf',
+         width =7.5, height = 7.5, pointsize = 16)
+aheatmap(data_t,
+         hclustfun=function(d) hclust(dist(d, method = 'euclidean'), method = "ward.D2"),
+         annRow = ann,
+         annCol = ann_col,
+         Colv = results_col[[3]]$consensusTree,
+         Rowv = results_row[[4]]$consensusTree,
+         labRow = rep('',dim(data_t)[1]))
+dev.off()
 
+sum(is.na(data_t))
 data <- data.frame(data, ann[match(rownames(ann),data$ID),])
 surv_months <- pmax(data$CLI_days_to_death, 
                     data$CLI_days_to_last_followup,
@@ -86,13 +93,21 @@ diff = survdiff(Surv(surv_months, CLI_vital_status == 1)~ class,
                 data = subset(data, Chr3 == 'Disomy'))
 diff
 
+diff = survdiff(Surv(surv_months, CLI_vital_status == 1)~ class, 
+                data = subset(data, Chr3 == 'Monosomy'))
+diff
+
 svg(file = "Figure3.svg", pointsize = 10,
     width = 7.5 , height = 4,)
 layout(matrix(c(1,2), ncol = 2, byrow = TRUE))
 par(mar=c(5,3,1,4), mgp = c(2, 1, 0))
 
 fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class, 
-             data = subset(data, Chr3 == 'Monosomy'))
+             data = subset(data, Chr3 == 'Disomy'))
+
+fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class, 
+             data = data)
+
 
 strata = levels(data$class)
 
@@ -148,7 +163,7 @@ boxplot(data)
 
 colnames(data)
 
-cox <- coxph(Surv(surv_months, CLI_vital_status == 1)~ Th1.cells, 
-             data = subset(data, Chr3 == 'Monosomy'))
+cox <- coxph(Surv(surv_months, CLI_vital_status == 1)~ Th2.cells + Chr3, 
+             data = data)
 
 summary(cox)
