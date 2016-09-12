@@ -74,7 +74,7 @@ aheatmap(data_t,
          annRow = ann,
          annCol = ann_col,
          Colv = results_col[[3]]$consensusTree,
-         Rowv = results_row[[4]]$consensusTree,
+         Rowv = results_row[[3]]$consensusTree,
          labRow = rep('',dim(data_t)[1]))
 dev.off()
 
@@ -163,7 +163,64 @@ boxplot(data)
 
 colnames(data)
 
-cox <- coxph(Surv(surv_months, CLI_vital_status == 1)~ Th2.cells + Chr3, 
-             data = data)
+data <- merge (data, 
+               data.frame(ID = gsub('-', '\\.', gsub('-...-...-....-..','',rownames(data_t))), data_t), 
+                          by = 'ID')
 
-summary(cox)
+
+pca <- prcomp(data[,256:283],
+                 center = FALSE,
+                 scale. = FALSE) 
+predict(pca, 
+        newdata=tail(data[,256:283], 2))
+
+library(devtools)
+install_github("ggbiplot", "vqv")
+
+library(ggbiplot)
+g <- ggbiplot(pca, obs.scale = 1, var.scale = 1, 
+              groups = data$class, ellipse = TRUE, 
+              circle = TRUE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal', 
+               legend.position = 'top')
+print(g)
+
+library(rpart)
+
+data_rpart <- data[, c(253, 254,256:283)]
+
+rpart_immune <- rpart(class~., data = data[, c(253, 254,256:283)],
+                    control = rpart.control(minsplit = 10))
+
+attributes(rpart_immune)
+plot(rpart_immune)
+text(rpart_immune, use.n=T,
+     cex = 0.5)
+rpart_immune$ordered
+
+library(party)
+ctree_post <- ctree(class~., data = data[, c(253, 254,256:283)],
+                    controls = ctree_control(maxsurrogate = 4))
+
+table(predict(ctree_post), data$class)
+plot(ctree_post)
+
+library(randomForest)
+rf <- randomForest(class~., data = data_rpart_post, ntree=100, proximity=TRUE)
+table(predict(rf), data_rpart_post$class)
+
+sink('histology_enhance.txt')
+table(clin$Contrast..0.non..1.cont, clin$Histology_simple)
+sink()
+
+p.value <- c()
+for (i in 256:283) {
+  a <- coxph(Surv(surv_months, CLI_vital_status == 1)~ data[,i] + Chr3, 
+                                 data = data)
+  p <- summary(a)$coefficients[5]
+  p.value <- append(p.value, p)
+  }
+
+
+cox[[2]]
