@@ -67,7 +67,7 @@ Chr3 <- factor(Chr3,
 
 ann$Chr3 <- Chr3
 
-CairoPDF(file = 'pancancer_TCGA.pdf',
+CairoPDF(file = 'cluster.pdf',
          width =7.5, height = 7.5, pointsize = 16)
 aheatmap(data_t,
          hclustfun=function(d) hclust(dist(d, method = 'euclidean'), method = "ward.D2"),
@@ -102,8 +102,8 @@ svg(file = "Figure3.svg", pointsize = 10,
 layout(matrix(c(1,2), ncol = 2, byrow = TRUE))
 par(mar=c(5,3,1,4), mgp = c(2, 1, 0))
 
-fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class, 
-             data = subset(data, Chr3 == 'Disomy'))
+fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ Chr3, 
+             data = subset(data, class == '1'))
 
 fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class, 
              data = data)
@@ -184,6 +184,18 @@ g <- ggbiplot(pca, obs.scale = 1, var.scale = 1,
 g <- g + scale_color_discrete(name = '')
 g <- g + theme(legend.direction = 'horizontal', 
                legend.position = 'top')
+
+
+print(g)
+
+g <- ggbiplot(pca, obs.scale = 1, var.scale = 1, 
+              groups = data$Chr3, ellipse = TRUE, 
+              circle = TRUE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal', 
+               legend.position = 'top')
+
+
 print(g)
 
 library(rpart)
@@ -223,4 +235,8 @@ for (i in 256:283) {
   }
 
 
-cox[[2]]
+boxplot(Th17.cells ~ Chr3, data)
+boxplot(T.cells ~ Chr3, data)
+boxplot(Th2.cells ~ Chr3, data)
+
+table(data$class, data$CLI_pathologic_stage)
