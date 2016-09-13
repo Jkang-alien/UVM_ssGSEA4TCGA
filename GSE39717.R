@@ -3,6 +3,8 @@ source("https://bioconductor.org/biocLite.R")
 biocLite("RTCGAToolbox")
 library(Biobase)
 library(GEOquery)
+library(GSVA)
+library(ssGSEA4TCGA)
 
 
 data_P1 <- read.csv('Supplementary_Table_S1_Worley_et_al.csv', header = TRUE,
@@ -33,7 +35,7 @@ head(gsmplatforms)
 gsmlist = Filter(function(gsm) {Meta(gsm)$platform=='GPL6098'},GSMList(gse))
 length(gsmlist)
 
-Table(gsmlist[[1]])[1:5,]
+Table(gsmlist[[2]])[1:5,]
 Columns(gsmlist[[1]])[1:5,]
 Table(GPLList(gse)[[1]])[2]
 
@@ -43,9 +45,17 @@ probesets <- Table(GPLList(gse)[[1]])[2]
 # with those in the GSMs
 data.matrix <- do.call('cbind',lapply(gsmlist,function(x) 
 {tab <- Table(x)
-mymatch <- match(probesets,tab$ID_REF)
+mymatch <- match(probesets$ID,tab$ID_REF)
 return(tab$VALUE[mymatch])
 }))
+
+data.matrix <- do.call('cbind',lapply(gsmlist,function(x) 
+{tab <- Table(x)
+#mymatch <- match(probesets$Search_key,tab$ID_REF)
+return(tab$VALUE)
+}))
+
+
 data.matrix <- apply(data.matrix,2,function(x) {as.numeric(as.character(x))})
 
 require(Biobase)
@@ -61,7 +71,9 @@ eset2
 #data.matrix <- log2(data.matrix)
 data.matrix[1:5,]
 dim(data.matrix)
+
 data.matrix <- data.matrix[complete.cases(data.matrix),]
+
 data_GSEA <- c()
 data_GSEA <- cbind(data.matrix[, colnames(data.matrix) %in% ID_Chr3_monosomy],
                    data.matrix[, colnames(data.matrix) %in% ID_Chr3_disomy])
@@ -85,3 +97,35 @@ write(cls, file = 'cls_GSE39717.cls', append = FALSE,
       ncolumns = length(cls)
 )
 
+gs <- gs_gmt('custom.bindea_correct.gmt')
+data <- gsva(data.matrix, gs, method = 'ssgsea')
+data_t <- scale(t(data), center = TRUE, scale = TRUE)
+
+pca <- prcomp(data_t,
+              center = FALSE,
+              scale = FALSE) 
+predict(pca, 
+        newdata=tail(data[,256:283], 2))
+Chr3[match(clin$Accession, rownames(data_t))] <- clin$Chr.3.status._aCGH
+clin$Chr.3.status._aCGH[is.na(clin$Chr.3.status._aCGH)] <- clin$Chr.3.status.FISH[is.na(clin$Chr.3.status._aCGH)]
+
+Chr3 <- append(Chr3, NA)
+
+library(devtools)
+install_github("ggbiplot", "vqv")
+
+library(ggbiplot)
+g <- ggbiplot(pca,
+              obs.scale = 1, var.scale = 1, 
+              groups = Chr3, ellipse = TRUE, 
+              circle = TRUE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal', 
+               legend.position = 'top')
+print(g)
+
+
+boxplot(data_t[,23]~Chr3)
+
+
+              
