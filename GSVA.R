@@ -97,13 +97,9 @@ diff = survdiff(Surv(surv_months, CLI_vital_status == 1)~ class,
                 data = subset(data, Chr3 == 'Monosomy'))
 diff
 
-svg(file = "Figure3.svg", pointsize = 10,
-    width = 7.5 , height = 4,)
-layout(matrix(c(1,2), ncol = 2, byrow = TRUE))
-par(mar=c(5,3,1,4), mgp = c(2, 1, 0))
 
-fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ Chr3, 
-             data = subset(data, class == '1'))
+fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class, 
+             data = subset(data, Chr3 == 'Monosomy'))
 
 fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class, 
              data = data)
@@ -111,6 +107,8 @@ fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ class,
 
 strata = levels(data$class)
 
+CairoPDF(file = 'survival_monosomy.pdf',
+         width =7.5, height = 7.5, pointsize = 16)
 survplot(fit,
          time.inc = 12,
          xlab = 'Months',
@@ -132,10 +130,11 @@ legend(60, 1.0, strata, lty = c(1:3), cex = 0.8,
        trace = TRUE,
        bty = 'n')
 
-legend(5.5*10, 0.8, 'P-value: 0.052', cex = 0.8,
+legend(5.5*10, 0.8, 'P-value: 0.62', cex = 0.8,
        xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1,
        trace = TRUE,
        bty = 'n')
+dev.off()
 
 fit = npsurv(Surv(surv_months, CLI_vital_status == 1)~ Chr3, 
              data = data)

@@ -37,25 +37,21 @@ length(gsmlist)
 
 Table(gsmlist[[2]])[1:5,]
 Columns(gsmlist[[1]])[1:5,]
-Table(GPLList(gse)[[1]])[2]
+Table(GPLList(gse)[[1]])[2][1:10,]
 
 probesets <- Table(GPLList(gse)[[1]])[2]
 # make the data matrix from the VALUE columns from each GSM
 # being careful to match the order of the probesets in the platform
 # with those in the GSMs
+
 data.matrix <- do.call('cbind',lapply(gsmlist,function(x) 
 {tab <- Table(x)
 mymatch <- match(probesets$ID,tab$ID_REF)
-return(tab$VALUE[mymatch])
-}))
-
-data.matrix <- do.call('cbind',lapply(gsmlist,function(x) 
-{tab <- Table(x)
-#mymatch <- match(probesets$Search_key,tab$ID_REF)
 return(tab$VALUE)
 }))
 
-
+mymatch <- match(probesets$ID,tab$ID_REF)
+dim(Table(gsmlist[[1]]))
 data.matrix <- apply(data.matrix,2,function(x) {as.numeric(as.character(x))})
 
 require(Biobase)
